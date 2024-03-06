@@ -120,5 +120,4 @@ venv.bak/
 .mypy_cache
 
 requirements_1.txt
-
 db_structure_init.png
