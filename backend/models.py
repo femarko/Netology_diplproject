@@ -6,7 +6,9 @@ class CLients:
     pass
 
 class Contact(models.Model):
+    CONTACT_TYPE_CHOICES = (("CNS", "consumer"), ("SPL", "supplier"))
     user = models.ForeignKey(User, verbose_name="Пользователь", related_name="contacts", on_delete=models.CASCADE)
+    contanct_type = models.CharField(choices=CONTACT_TYPE_CHOICES)
     phone = models.CharField(max_length=10, verbose_name="Телефон")
 
     class Meta:
