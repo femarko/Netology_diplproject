@@ -1,14 +1,49 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-class CLients:
-    """todo регистрация пользователей: User Registration Django for APIs Build web APIs with Python and Django William S. Vincent"""
-    pass
+# todo регистрация пользователей: User Registration Django for APIs Build web APIs with Python and Django
+#  William S. Vincent
+
+
+class Category(models.Model):
+    category_name = models.CharField(max_length=1000, verbose_name="Категория")
+
+    def __str__(self):
+        return self.category_name
+
+
+class Product(models.Model):
+    product_name = models.CharField(max_length=500, verbose_name="Товар")
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="products")
+
+    def __str__(self):
+        return self.product_name
+
+
+class ProductInfo(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="product_infos")
+
+
+class Parameter(models.Model):
+    parameter_name = models.CharField(max_length="1000", verbose_name="Параметр")
+    product_infos = models.ManyToManyField(ProductInfos)
+
+
+
+class Shop(models.Model):
+    shop_name = models.CharField(max_length=100, verbose_name="Магазин")
+    shop_url = models.URLField(verbose_name="Сайт магазина")
+    categories = models.ManyToManyField(Category, through="CategoryShop", related_name="categories")
+    products = models.ManyToManyField(Product, through="ProductInfo", related_name="shops")
+
+    def __str__(self):
+        return self.shop_name
+
 
 class Contact(models.Model):
     CONTACT_TYPE_CHOICES = (("CNS", "consumer"), ("SPL", "supplier"))
     user = models.ForeignKey(User, verbose_name="Пользователь", related_name="contacts", on_delete=models.CASCADE)
-    contanct_type = models.CharField(choices=CONTACT_TYPE_CHOICES)
+    contanct_type = models.CharField(choices=CONTACT_TYPE_CHOICES, verbose_name="Тип контакта")
     phone = models.CharField(max_length=10, verbose_name="Телефон")
 
     class Meta:
@@ -39,7 +74,36 @@ class Address(models.Model):
     def __str__(self):
         return f'{self.country} {self.city} {self.street} {self.house}'
 
-#
-# class Order(models.Model):
-#     ORDER_STATUS_CHOICE = [()]
-#     order_status = ''
+
+class Category(models.Model):
+    category_name = models.CharField(max_length=500, verbose_name="Категория товара")
+    shops = ''  # todo m2m CategoryShop
+
+
+class Order(models.Model):
+    ORDER_STATUS_CHOICES = (
+        ('basket', 'Статус корзины'),
+        ('new', 'Новый'),
+        ('confirmed', 'Подтвержден'),
+        ('assembled', 'Собран'),
+        ('sent', 'Отправлен'),
+        ('delivered', 'Доставлен'),
+        ('canceled', 'Отменен'),
+    )
+    user = models.ForeignKey(User, verbose_name="Пользователь", related_name="orders", on_delete=models.CASCADE)
+    order_status = models.CharField(choices=ORDER_STATUS_CHOICES, max_length=10, verbose_name="Статус заказа")
+    order_date = models.DateTimeField(auto_now=True, verbose_name="Дата заказа")
+    products = models.ManyToManyField(Product, related_name="orders", verbose_name="Заказы")
+
+    def __str__(self):
+        return f"Order status: {self.order_status}"
+
+
+class OrderItem(models.Model):
+    product = models.ForeignKey(Product,
+                                on_delete=models.CASCADE,
+                                related_name="order_items",
+                                verbose_name="Товар в заказе")
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="products", verbose_name="Заказ")
+    order_quantity = models.IntegerField(verbose_name="Количество")
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name="orders")
