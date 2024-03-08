@@ -20,13 +20,15 @@ class Product(models.Model):
         return self.product_name
 
 
-class ProductInfo(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="product_infos")
-
+class StockDetailes(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="stock_detailes",
+                                verbose_name="Товар", blank=True)
+    stock_level = models.PositiveIntegerField(verbose_name="Количество в наличии")
+# todo продолжить
 
 class Parameter(models.Model):
     parameter_name = models.CharField(max_length="1000", verbose_name="Параметр")
-    product_infos = models.ManyToManyField(ProductInfos)
+    product_infos = models.ManyToManyField(ProductInfo, through="ProductParameter", related_name="parameters")
 
 
 
