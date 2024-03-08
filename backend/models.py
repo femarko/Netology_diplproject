@@ -20,26 +20,32 @@ class Product(models.Model):
         return self.product_name
 
 
-class StockDetailes(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="stock_detailes",
-                                verbose_name="Товар", blank=True)
-    stock_level = models.PositiveIntegerField(verbose_name="Количество в наличии")
-# todo продолжить
-
-class Parameter(models.Model):
-    parameter_name = models.CharField(max_length="1000", verbose_name="Параметр")
-    product_infos = models.ManyToManyField(ProductInfo, through="ProductParameter", related_name="parameters")
-
-
-
 class Shop(models.Model):
     shop_name = models.CharField(max_length=100, verbose_name="Магазин")
     shop_url = models.URLField(verbose_name="Сайт магазина")
     categories = models.ManyToManyField(Category, through="CategoryShop", related_name="categories")
-    products = models.ManyToManyField(Product, through="ProductInfo", related_name="shops")
+    products = models.ManyToManyField(Product, through="StockDetailes", related_name="shops")
 
     def __str__(self):
         return self.shop_name
+
+
+class StockDetailes(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="stock_detailes",
+                                verbose_name="Товар", blank=True)
+    shop = models.ForeignKey(Shop, related_name="stock_detailes", on_delete=models.CASCADE, verbose_name="Магазин")
+    product_model = models.CharField(max_length=100, verbose_name="Модель")
+    stock_level = models.PositiveIntegerField(verbose_name="Количество в наличии")
+    stock_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Цена")
+    price_rrc = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Рекомендованная розничная цена")
+
+
+class Parameter(models.Model):
+    parameter_name = models.CharField(max_length="1000", verbose_name="Параметр")
+    product_infos = models.ManyToManyField(StockDetailes, through="ProductParameter", related_name="parameters")
+
+
+
 
 
 class Contact(models.Model):
