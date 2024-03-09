@@ -14,7 +14,7 @@ class Category(models.Model):
 
 class Product(models.Model):
     product_name = models.CharField(max_length=500, verbose_name="Товар")
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="products")
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="products", verbose_name="Категории")
 
     def __str__(self):
         return self.product_name
@@ -23,7 +23,7 @@ class Product(models.Model):
 class Shop(models.Model):
     shop_name = models.CharField(max_length=100, verbose_name="Магазин")
     shop_url = models.URLField(verbose_name="Сайт магазина")
-    categories = models.ManyToManyField(Category, through="CategoryShop", related_name="categories")
+    categories = models.ManyToManyField(Category, verbose_name="Категории", related_name="shops")
     products = models.ManyToManyField(Product, through="StockDetailes", related_name="shops")
 
     def __str__(self):
@@ -31,9 +31,15 @@ class Shop(models.Model):
 
 
 class StockDetailes(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="stock_detailes",
-                                verbose_name="Товар", blank=True)
-    shop = models.ForeignKey(Shop, related_name="stock_detailes", on_delete=models.CASCADE, verbose_name="Магазин")
+    product = models.ForeignKey(Product,
+                                on_delete=models.CASCADE,
+                                verbose_name="Товар",
+                                related_name="stock_detailes",
+                                blank=True)
+    shop = models.ForeignKey(Shop,
+                             verbose_name="Магазин",
+                             on_delete=models.CASCADE,
+                             related_name="stock_detailes")
     product_model = models.CharField(max_length=100, verbose_name="Модель")
     stock_level = models.PositiveIntegerField(verbose_name="Количество в наличии")
     stock_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Цена")
@@ -42,10 +48,59 @@ class StockDetailes(models.Model):
 
 class Parameter(models.Model):
     parameter_name = models.CharField(max_length="1000", verbose_name="Параметр")
-    product_infos = models.ManyToManyField(StockDetailes, through="ProductParameter", related_name="parameters")
+    stock_detailes = models.ManyToManyField(StockDetailes, through="ParameterValue", related_name="parameters")
 
 
+class ParameterValue(models.Model):
+    stock_detailes = models.ForeignKey(StockDetailes,
+                                       on_delete=models.CASCADE,
+                                       verbose_name="Параметры в наличии",
+                                       related_name="parameter_value")
+    parameter = models.ForeignKey(Parameter,
+                                  on_delete=models.CASCADE,
+                                  verbose_name="Параметр",
+                                  related_name="parameter_value")
+    parameter_value = models.CharField(max_length=1000, verbose_name="Значение параметра")
 
+
+class Order(models.Model):
+
+    ORDER_STATUS_CHOICES = (
+        ('basket', 'Статус корзины'),
+        ('new', 'Новый'),
+        ('confirmed', 'Подтвержден'),
+        ('assembled', 'Собран'),
+        ('sent', 'Отправлен'),
+        ('delivered', 'Доставлен'),
+        ('canceled', 'Отменен'),
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь", related_name="orders")
+    order_date = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания заказа")
+    order_status = models.CharField(choices=ORDER_STATUS_CHOICES, max_length=10, verbose_name="Статус заказа")
+    products = models.ManyToManyField(Product, through="OrderItem", verbose_name="Товары", related_name="orders")
+    shops = models.ManyToManyField(Shop,
+                                   through="OrderItem",
+                                   verbose_name="Магазины",
+                                   related_name="orders")
+    def __str__(self):
+        return f"Order status: {self.order_status}"
+
+
+class OrderItem(models.Model):
+    product = models.ForeignKey(Product,
+                                on_delete=models.CASCADE,
+                                verbose_name="Товары",
+                                related_name="order_items")
+    order = models.ForeignKey(Order,
+                              on_delete=models.CASCADE,
+                              verbose_name="Заказ",
+                              related_name="order_items")
+    shop = models.ForeignKey(Shop,
+                             on_delete=models.CASCADE,
+                             verbose_name="Магазин",
+                             related_name="orders_items")
+    quantity = models.PositiveIntegerField(verbose_name="Количество")
 
 
 class Contact(models.Model):
@@ -88,30 +143,3 @@ class Category(models.Model):
     shops = ''  # todo m2m CategoryShop
 
 
-class Order(models.Model):
-    ORDER_STATUS_CHOICES = (
-        ('basket', 'Статус корзины'),
-        ('new', 'Новый'),
-        ('confirmed', 'Подтвержден'),
-        ('assembled', 'Собран'),
-        ('sent', 'Отправлен'),
-        ('delivered', 'Доставлен'),
-        ('canceled', 'Отменен'),
-    )
-    user = models.ForeignKey(User, verbose_name="Пользователь", related_name="orders", on_delete=models.CASCADE)
-    order_status = models.CharField(choices=ORDER_STATUS_CHOICES, max_length=10, verbose_name="Статус заказа")
-    order_date = models.DateTimeField(auto_now=True, verbose_name="Дата заказа")
-    products = models.ManyToManyField(Product, related_name="orders", verbose_name="Заказы")
-
-    def __str__(self):
-        return f"Order status: {self.order_status}"
-
-
-class OrderItem(models.Model):
-    product = models.ForeignKey(Product,
-                                on_delete=models.CASCADE,
-                                related_name="order_items",
-                                verbose_name="Товар в заказе")
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="products", verbose_name="Заказ")
-    order_quantity = models.IntegerField(verbose_name="Количество")
-    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name="orders")
