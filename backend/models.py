@@ -43,7 +43,7 @@ class StockDetailes(models.Model):
 
 
 class Parameter(models.Model):
-    parameter_name = models.CharField(max_length="1000", verbose_name="Параметр")
+    parameter_name = models.CharField(max_length=1000, verbose_name="Параметр")
     stock_detailes = models.ManyToManyField(StockDetailes,
                                             through="ParameterPositions",
                                             verbose_name="Сведения об остатках",
@@ -117,7 +117,7 @@ class Address(models.Model):
     street = models.CharField(max_length=500, verbose_name="Улица")
     house = models.CharField(max_length=5, verbose_name="Дом")
     building = models.CharField(max_length=3, verbose_name="Строение")
-    appart_office = models.CharField(max_length=5, verbose_name="Квартира или офис")
+    appart_office = models.CharField(max_length=5, verbose_name="Квартира или офис", blank=True)
 
     def __str__(self):
         return f"{self.city} {self.street} {self.house} {self.building} {self.appart_office}"
